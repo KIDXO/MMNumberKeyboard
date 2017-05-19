@@ -148,8 +148,8 @@ static const CGFloat MMNumberKeyboardPadSpacing = 8.0f;
     
     NSLocale *locale = self.locale ?: [NSLocale currentLocale];
     NSString *decimalSeparator = [locale objectForKey:NSLocaleDecimalSeparator];
+    [decimalPointButton.titleLabel setFont:buttonFont];
     [decimalPointButton setTitle:decimalSeparator ?: @"." forState:UIControlStateNormal];
-    
     [buttonDictionary setObject:decimalPointButton forKey:@(MMNumberKeyboardButtonDecimalPoint)];
     
     for (UIButton *button in buttonDictionary.objectEnumerator) {
@@ -375,10 +375,23 @@ static const CGFloat MMNumberKeyboardPadSpacing = 8.0f;
     }];
 }
 
-- (void)setAllowsDecimalPoint:(BOOL)allowsDecimalPoint
+- (void)setExtraType:(MMNumberKeyboardButtonExtra)extraType
 {
-    if (allowsDecimalPoint != _allowsDecimalPoint) {
-        _allowsDecimalPoint = allowsDecimalPoint;
+    if (extraType != _extraType) {
+        _extraType = extraType;
+        
+        NSDictionary *buttonDictionary = self.buttonDictionary;
+        UIButton *decimalPointKey = buttonDictionary[@(MMNumberKeyboardButtonDecimalPoint)];
+        if (decimalPointKey) {
+            switch (_extraType) {
+                case MMNumberKeyboardButtonExtraX: {
+                    [decimalPointKey setTitle:@"X" forState:UIControlStateNormal];
+                }
+                    break;
+                default:
+                    break;
+            }
+        }
         
         [self setNeedsLayout];
     }
@@ -457,7 +470,7 @@ NS_INLINE CGRect MMButtonRectMake(CGRect rect, CGRect contentRect, UIUserInterfa
     const UIUserInterfaceIdiom interfaceIdiom = UI_USER_INTERFACE_IDIOM();
     const CGFloat spacing = (interfaceIdiom == UIUserInterfaceIdiomPad) ? MMNumberKeyboardPadBorder : 0.0f;
     const CGFloat maximumWidth = (interfaceIdiom == UIUserInterfaceIdiomPad) ? 400.0f : CGRectGetWidth(bounds);
-    const BOOL allowsDecimalPoint = self.allowsDecimalPoint;
+    const MMNumberKeyboardButtonExtra extraType = self.extraType;
     
     const CGFloat width = MIN(maximumWidth, CGRectGetWidth(bounds));
     const CGRect contentRect = (CGRect){
@@ -489,7 +502,7 @@ NS_INLINE CGRect MMButtonRectMake(CGRect rect, CGRect contentRect, UIUserInterfa
             rect.origin.y = numberSize.height * 3;
             rect.origin.x = numberSize.width;
             
-            if (!allowsDecimalPoint) {
+            if (extraType == MMNumberKeyboardButtonExtraNone) {
                 rect.size.width = numberSize.width * 2.0f;
                 [button setContentEdgeInsets:UIEdgeInsetsMake(0, 0, 0, numberSize.width)];
             }
@@ -525,7 +538,7 @@ NS_INLINE CGRect MMButtonRectMake(CGRect rect, CGRect contentRect, UIUserInterfa
         
         [decimalPointKey setFrame:MMButtonRectMake(rect, contentRect, interfaceIdiom)];
         
-        decimalPointKey.hidden = !allowsDecimalPoint;
+        decimalPointKey.hidden = (extraType == MMNumberKeyboardButtonExtraNone);
     }
     
     // Layout utility column.
@@ -592,7 +605,7 @@ NS_INLINE CGRect MMButtonRectMake(CGRect rect, CGRect contentRect, UIUserInterfa
                 rect.origin.x = (col + 1) * columnWidth;
                 rect.size.width = separatorDimension;
                 
-                if (col == 1 && !allowsDecimalPoint) {
+                if (col == 1 && (extraType == MMNumberKeyboardButtonExtraNone)) {
                     rect.size.height = CGRectGetHeight(contentRect) - rowHeight;
                 } else {
                     rect.size.height = CGRectGetHeight(contentRect);
@@ -632,18 +645,17 @@ NS_INLINE CGRect MMButtonRectMake(CGRect rect, CGRect contentRect, UIUserInterfa
     NSString *resource = [name stringByDeletingPathExtension];
     NSString *extension = [name pathExtension];
     
-    if (!resource.length) {
-        return nil;
+    if (resource) {
+        NSBundle *bundle = [NSBundle bundleForClass:[self class]];
+        if (bundle) {
+            NSString *resourcePath = [bundle pathForResource:resource ofType:extension];
+            
+            return [UIImage imageWithContentsOfFile:resourcePath];
+        } else {
+            return [UIImage imageNamed:name];
+        }
     }
-
-    NSBundle *bundle = [NSBundle bundleForClass:[self class]];
-    NSString *resourcePath = [bundle pathForResource:resource ofType:extension];
-
-    if (resourcePath.length) {
-        return [UIImage imageWithContentsOfFile:resourcePath];
-    }
-
-    return [UIImage imageNamed:resource];
+    return nil;
 }
 
 @end

@@ -72,6 +72,12 @@ typedef NS_ENUM(NSUInteger, MMNumberKeyboardButtonStyle) {
     MMNumberKeyboardButtonStyleDone
 };
 
+typedef NS_ENUM(NSUInteger, MMNumberKeyboardButtonExtra) {
+    MMNumberKeyboardButtonExtraNone,
+    MMNumberKeyboardButtonExtraDecimalPoint,
+    MMNumberKeyboardButtonExtraX
+};
+
 /**
  *  A simple keyboard to use with numbers and, optionally, a decimal point.
  */
@@ -122,7 +128,7 @@ typedef NS_ENUM(NSUInteger, MMNumberKeyboardButtonStyle) {
  *
  *  @note The default value of this property is @c NO.
  */
-@property (assign, nonatomic) BOOL allowsDecimalPoint;
+@property (assign, nonatomic) MMNumberKeyboardButtonExtra extraType;
 
 /**
  *  The visible title of the Return key.
